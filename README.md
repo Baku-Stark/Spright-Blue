@@ -1,4 +1,8 @@
+<div align="center">
+
 # Spright Blue Bot - Discord🤖
+
+</div>
 
 <p align="center">
     Bot criado em Python no estilo do monstro de duelo (Yu-Gi-Oh!) 'Spright Blue'. Não é um monstro forte, mas eu tenho certo carinho.
