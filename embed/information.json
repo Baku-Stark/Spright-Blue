@@ -1,0 +1,18 @@
+{
+  "content": null,
+  "embeds": [
+    {
+      "title": "★ Spright Blue",
+      "description": "_Bot Spright activated successfully!_\n\n:computer: **My Creator**\n_GitHub_:  https://github.com/Baku-Stark\n\n:computer: **Repository**\n_GitHub_: https://github.com/Baku-Stark/Spright-Blue",
+      "color": 1148068,
+      "footer": {
+        "text": "Level 2 ★"
+      },
+      "timestamp": "2022-12-23T03:00:00.000Z",
+      "thumbnail": {
+        "url": "https://media.discordapp.net/attachments/1055607254465908877/1055607254700793896/SprightBlue-Icon.png"
+      }
+    }
+  ],
+  "attachments": []
+}

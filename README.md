@@ -15,9 +15,17 @@
     <img src="img/SprightBlue.png"/>
 </div>
 
-#
+<hr>
 
 > **Bibliotecas utilizadas**
-* `import discord`
-    * `pip install discord.py`
+* `pip install discord.py`
+    * `import discord`
+    * `from discord import Embed`
     * `from discord.ext import commands`
+
+<br>
+
+* `pip install discord-webhook`
+    * `from discord_webhook import DiscordWebhook, DiscordEmbed`
+
+* `import os`
