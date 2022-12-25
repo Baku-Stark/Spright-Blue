@@ -25,6 +25,11 @@
 
 <br>
 
+* _pip install youtube_dl_
+    * `import youtube_dl`
+
+<br>
+
 * _pip install discord-webhook_
     * `from discord_webhook import DiscordWebhook, DiscordEmbed`
 
@@ -39,6 +44,11 @@
     * `from rich import print`
     * `from rich.tree import Tree`
     * `from rich.panel import Panel`
+
+<br>
+
+* _pip install wavelink_
+    * `import wavelink`
 
 <br>
 

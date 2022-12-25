@@ -1,4 +1,5 @@
 # PERSONAL
+/venv
 /.gitignore
 arq/config.json
 
