@@ -3,7 +3,7 @@
   "embeds": [
     {
       "title": "★ Spright Blue",
-      "description": "_Bot Spright activated successfully!_\n\n:computer: **My Creator**\n_GitHub_:  https://github.com/Baku-Stark\n\n:computer: **Repository**\n_GitHub_: https://github.com/Baku-Stark/Spright-Blue",
+      "description": "_Bot Spright activated successfully!_{os.linesep}\n\n:computer: **My Creator**{os.linesep}_GitHub_:  https://github.com/Baku-Stark{os.linesep}\n:computer: **About Me**{os.linesep}Players and lovers of the _Yu-Gi-Oh!_ know me a lot (I'm a pretty annoying monster considering my level). To those who don't know... BIBIRUUU!!! I AM SPRIGHT BLUE :blue_heart: !!!",
       "color": 1148068,
       "footer": {
         "text": "Level 2 ★"
