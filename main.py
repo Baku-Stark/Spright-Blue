@@ -86,8 +86,17 @@ async def joinChannel(msg):
 
 	else:
 		# mostra o canal de voz onde o user está
-		channel = msg.message.author.voice.channel
-	await channel.connect()
+		voiceChannel = discord.utils.get(msg.guild.voice_channels, name=f'{msg.message.author.voice.channel}')
+		await voiceChannel.connect()
+
+@bot_spright.command(name='leave')
+async def leaveChannel(msg):
+	user_set = f"<@{msg.author.id}>"
+	if(msg.voice_client):
+		await msg.guild.voice_client.disconnect()
+		await msg.send(f"Fui desconectado do canal de voz, {user_set}.")
+	else:
+		await msg.send(f"Eu não estou em nenhum canal de voz, {user_set}.")
 
 # ================================================================
 # CONFIGURE [GREET]
