@@ -18,6 +18,11 @@
 <hr>
 
 > **Bibliotecas utilizadas**
+
+* _import os_
+
+<br>
+
 * _pip install discord.py_
     * `import discord`
     * `from discord import Embed`
@@ -52,10 +57,16 @@
 
 <br>
 
-* _import os_
+* _pip install ffmpeg-python_
+    * `import asyncio`
+    * `from ffmpeg import FFmpeg`
 
 <br>
 
 * _pip install requests_
     * `import requests`
     * `from requests.exceptions import ConnectionError`
+
+<br>
+
+* _pip install PyNaCl_

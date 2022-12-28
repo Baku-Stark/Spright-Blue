@@ -2,8 +2,12 @@
 # IMPORT [os - Miscellaneous operating system interfaces]
 import os
 
-# IMPORT [wavelink]
-import wavelink
+# IMPORT [wavelink n' youtube]
+import asyncio
+import youtube_dl
+
+# IMPORT [requests - images]
+import requests
 
 # IMPORT [json - config.json]
 import json
@@ -35,11 +39,11 @@ from rich import print
 from rich.tree import Tree
 from rich.panel import Panel
 
-# IMPORT [mandaTrue.py > on_TrulyFunction]
-from mandaTrue import on_TrulyFunction
-
-# IMPORT [function > files]
+# IMPORT [function[folder] > files]
+from function.mandaTrue import on_TrulyFunction
 from function.connection import connection_test
+from function.meme import memeSelect
+from function.hist import historyWrite
 
 # ================================================================
 # CONFIGURE [Discord]
@@ -55,13 +59,32 @@ CHANNEL_ID = JSON_FILE['CHANNEL_ID']
 channel = bot_spright.get_channel(CHANNEL_ID)
 TOKEN = JSON_FILE['TOKEN']
 
+# CONFIG [YOUTUBE_DL]
+client = discord.Client(intents=discord.Intents.all())
+key = JSON_FILE['TOKEN']
+
+voice_clients = {}
+
+yt_dl_opts = {
+    'format': 'bestaudio',
+    'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
+    'restrictfilenames': True,
+    'noplaylist': True,
+    'nocheckcertificate': True,
+    'ignoreerrors': False,
+    'logtostderr': False,
+    'quiet': True,
+    'no_warnings': True,
+    'default_search': 'auto',
+    'source_address': '0.0.0.0' # bind to ipv4 since ipv6 addresses cause issues sometimes
+}
+
+ytdl = youtube_dl.YoutubeDL(yt_dl_opts)
+
+FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': "-vn"}
+
 # ================================================================
 # APPLICATION [Main Function ACTIVE]
-class CustomPlayer(wavelink.Player):
-	def __init__(self):
-		super().__init__()
-		self.queue = wavelink.Queue()
-
 @bot_spright.event
 async def on_ready():
 	'''
@@ -75,9 +98,6 @@ async def on_ready():
 	# Connection Test
 	print(connection_test())
 
-	# HTTPS and websocket operations
-	bot_spright.loop.create_task(connect_nodes())
-
 	# Panel Greeting
 	print(Panel.fit(f"[bold blue]Hi, human!!!\nI am {bot_spright.user}", border_style="cyan", title="Bot Discord"))
 
@@ -88,37 +108,50 @@ async def on_ready():
 
 # ================================================================
 # CONFIGURE [MUSIC]
-async def connect_nodes():
-	await bot_spright.wait_until_ready()
-	
-	await wavelink.NodePool.create_node(
-		bot=bot_spright,
-		host='0.0.0.0',
-		port=2333,
-		password='youshallnotpass'
-	)
-
 @bot_spright.command(name='play')
-async def joinChannel(msg, urlYT: str):
-	user_set = f"<@{msg.author.id}>"
-	if not msg.message.author.voice:
-		await msg.reply(f"Entre em alguma sala, {user_set}")
-		return
+async def joinChannel(ctx, urlYT: str):
+	'''
+		DJ Spright Blue.
+		|
+		|
+		`--> user_set : Channel where the bot will be directed.
+		`--> voiceChannel : Voice channel
+		|
+		`--> data_music['channel'] : Selected channel name.
+		`--> data_music['url'] : Link to player targeting generated <!important>.
+	'''
 
-	else:
-		# mostra o canal de voz onde o user está
-		voiceChannel = discord.utils.get(msg.guild.voice_channels, name=f'{msg.message.author.voice.channel}')
-		await msg.reply(urlYT)
-		await voiceChannel.connect()
+	user_set = f"<@{ctx.author.id}>"
+
+	try:
+		if not ctx.message.author.voice:
+			await ctx.reply(f"Entre em alguma sala, {user_set}")
+			return
+
+		else:
+			# mostra o canal de voz onde o user está
+			voiceChannel = discord.utils.get(ctx.guild.voice_channels, name=f"{ctx.message.author.voice.channel}")
+			await voiceChannel.connect()
+
+			# url escolhido
+			loop = asyncio.get_event_loop()
+			data_music = await loop.run_in_executor(None, lambda: ytdl.extract_info(url=urlYT, download=False))
+			song = data_music['url']
+			player = discord.FFmpegPCMAudio(song, **FFMPEG_OPTIONS)
+			voiceChannel.play(player)
+
+	except discord.ext.commands.errors.MissingRequiredArgument:
+		await ctx.reply("❌ You need to enter a song link.")
 
 @bot_spright.command(name='leave')
-async def leaveChannel(msg):
-	user_set = f"<@{msg.author.id}>"
-	if(msg.voice_client):
-		await msg.guild.voice_client.disconnect()
-		await msg.reply(f"Fui desconectado do canal de voz, {user_set}.")
+async def leaveChannel(ctx):
+	user_set = f"<@{ctx.author.id}>"
+
+	if(ctx.voice_client):
+		await ctx.guild.voice_client.disconnect()
+		await ctx.reply(f"✔️ I was disconnected from the voice channel successfully, {user_set}.")
 	else:
-		await msg.reply(f"Eu não estou em nenhum canal de voz, {user_set}.")
+		await ctx.reply(f"❌ I'm not on any voice channels, {user_set}.")
 
 # ================================================================
 # CONFIGURE [GREET]
@@ -128,11 +161,15 @@ async def on_message(ctx):
 		Greeting message from the bot.
 		|
 		|
-		`--> channel : Channel where the bot will be directed.
-			`--> message.channel : Exact channel where the command was performed.
+		`--> ctx.author : Message author name (example#1234).
+			`--> ctx.author.id : Message author ID to mention.
+			`--> ctx.guild.icon.url : Icon's server.
+			`--> ctx.guild.owner : Server owner.
+			
 	'''
 
 	user_set = f"<@{ctx.author.id}>"
+
 	if user_set == "<@303321235679477760>":
 		await ctx.reply(f'Hello, {user_set}! MY FATHER :heart: !!!')
 	else:
@@ -158,32 +195,79 @@ async def on_Truly(ctx):
 # ================================================================
 # CONFIGURE [MEMES]
 @bot_spright.command(name="meme")
-async def on_Meme(ctx):
+async def on_Meme(ctx, server_select: str):
 	'''
 		Meme upload function.
 		|
 		|
-		`--> img_set : Selected image file variable.
+		`--> server_select : Server selected[tcgserver/here].
+		`--> ctx.guild.id : Message's current server ID.
+		`--> image_choice : Randomly selected image from the list[memeSelect].
+			`--> img_set : Selected image file variable.
 		`--> with open(rb) : Opens the file in binary format for reading.
 		`--> channel : Channel where the bot will be directed.
-			`--> message.channel : Exact channel where the command was performed.
 	'''
+	if str(ctx.guild.id) == "758412990163714139" and server_select.lower() == "tcgserver":
+		image_choice = memeSelect("servertcg")
 
-	with open("img_memes/meme_test.png", 'rb') as img:
-		img_set = discord.File(img)
-		await ctx.reply(file=img_set)
+		await ctx.send(f"✔️ This is the '{ctx.guild.name}' server. That's why it has a special meme folder. See one of the memes:")
 
+		with open(f"img_memes/servertcg/{image_choice}", 'rb') as img:
+			img_set = discord.File(img)
+			
+			await ctx.reply(file=img_set)
+
+	elif str(ctx.guild.id) != "758412990163714139" and server_select.lower() == "tcgserver":
+		await ctx.reply("❌ This is not `Only 🇧🇷 TAG` server.")
+		
+
+	elif server_select.lower() == "here":
+		image_choice = memeSelect("other_server")
+
+		with open(f"img_memes/o_servers/{image_choice}", 'rb') as img:
+			img_set = discord.File(img)
+			await ctx.reply(file=img_set)
+
+	else:
+		await ctx.reply("❌ Something went wrong...")
+
+@bot_spright.command(name="save")
+async def on_MemeSave(ctx, folder: str):
+	image_url = str(ctx.message.attachments[0].url)
+	ftype = image_url.split('/')[-1]
+	myfile = requests.get(image_url)
+	
+	if folder.lower() == "servertcg" or folder.lower() == "o_servers":
+		open(f"img_memes/{folder}/{ftype}", 'wb').write(myfile.content)
+
+		#  history [function]
+		historyWrite(ctx.author, image_url, folder, update_times, ctx.guild.name, ctx.guild.id)
+		
+		user_set = f"<@{ctx.author.id}>"
+		await ctx.reply(f"✔️ The image was successfully saved, {user_set}!")
+		
+	else:
+		URL_WEBHOOK = JSON_FILE['URL_WEBHOOK']
+		embed = Embed(
+			url=URL_WEBHOOK,
+			title="★ Spright Blue - Info",
+			description="❌ Directory not found. Use `serverTCG` or `o_servers`.",
+			color= discord.Colour.dark_blue()
+    	).set_footer(text=f"Level 2 ★ | {update_times}")
+		
+		await ctx.reply(embed=embed)
+	
 # ================================================================
 # CONFIGURE [WEBHOOK - EMBED(INFO)]
 @bot_spright.command(name='info')
 async def on_EmbedInfo(ctx):
     URL_WEBHOOK = JSON_FILE['URL_WEBHOOK']
-    DESCRIPTION_EMBED = f"""
-		_Bot Spright activated successfully!_{os.linesep}
-		:computer: **My Creator**{os.linesep}
-		_GitHub_:  https://github.com/Baku-Stark{os.linesep}\n
-		:computer: **About Me**{os.linesep}
-		```Players and lovers of the Yu-Gi-Oh! know me a lot (I'm a pretty annoying monster considering my level). To those who don't know... BIBIRUUU!!! I AM SPRIGHT BLUE :blue_heart: !!!``
+    DESCRIPTION_EMBED = """
+		_Bot Spright activated successfully!_
+		💻 **My Creator**\n
+		GitHub:  https://github.com/Baku-Stark\n\n
+		💻 **About Me**\n
+		```Players and lovers of the Yu-Gi-Oh! know me a lot (I'm a pretty annoying monster considering my level). To those who don't know... BIBIRUUU!!! I AM SPRIGHT BLUE 💙 !!!```
 	"""
 
     embed = Embed(
@@ -209,14 +293,26 @@ async def on_EmbedHelp(ctx):
 		color=discord.Color.dark_blue()
 	).set_footer(text=f"Level 2 ★ | {update_times}").set_thumbnail(url="https://media.discordapp.net/attachments/1055607254465908877/1055607254700793896/SprightBlue-Icon.png")
 
+	# title[😂 Funny]
+	embed.add_field(name="▬▬▬▬▬▬", value="😂 **Funny**", inline=False)
+	# content
 	embed.add_field(name="`/mandaTrue`", value="```A prank of my creator with his friends. Nothing written here should be taken seriously.```", inline=True)
 	embed.add_field(name="`/meme`", value="```For your fun, my creator created a folder with memes to reply.```", inline=True)
-	embed.add_field(name="`/helper`", value="```I'll reply a list of commands... like this one.```", inline=False)
-	embed.add_field(name="`/info`", value="```Information of my existence and my creator.```", inline=True)
 	embed.add_field(name="`/greet`", value="```A friendly greeting.```", inline=True)
 
-	await ctx.reply(embed=embed)
+	# title[🕹️ Control]
+	embed.add_field(name="▬▬▬▬▬▬", value="🕹️ **Control**", inline=False)
+	# content
+	embed.add_field(name="`/helper`", value="```I'll reply a list of commands... like this one.```", inline=True)
+	embed.add_field(name="`/info`", value="```Information of my existence and my creator.```", inline=True)
 
+	# title[🎧 Music]
+	embed.add_field(name="▬▬▬▬▬▬", value="🎧 **Music**", inline=False)
+	# title[🎧 Music]
+	embed.add_field(name="`/play <url_YouTube>`", value="```I'm going to join the voice channel to play a song.```", inline=True)
+	embed.add_field(name="`/leave`", value="```You will take me off the voice call by interrupting your music.```", inline=True)
+
+	await ctx.reply(embed=embed)
 
 # ================================================================
 # CONFIGURE [run]

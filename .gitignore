@@ -1,7 +1,7 @@
 # PERSONAL
-/venv
+/img_memes
 /.gitignore
-arq/config.json
+arq/
 
 # Byte-compiled / optimized / DLL files
 /__pycache__
