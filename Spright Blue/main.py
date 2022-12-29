@@ -63,7 +63,7 @@ MUSIC_PLAYING = False
 # 2d array containing [song, channel]
 MUSIC_QUEUE = []
 YDL_OPTIONS = {
-    'format': 'bestaudio',
+    'format': 'bestaudio/best',
     'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
     'restrictfilenames': True,
     'noplaylist': True,
@@ -101,29 +101,6 @@ def play_next(ctx):
 
 	else:
 		MUSIC_PLAYING = False
-
-# ================================================================
-# APPLICATION [Main Function ACTIVE]
-@bot_spright.event
-async def on_ready():
-	'''
-		Bot activation check.
-		|
-		|
-		`--> Panel.fit : Operation message successfully activated.
-			`--> bot_spright.user : Return user's bot Spright Blue.
-			`--> tree : Main command tree.
-	'''
-	# Connection Test
-	print(connection_test())
-
-	# Panel Greeting
-	print(Panel.fit(f"[bold blue]Hi, human!!!\nI am {bot_spright.user}", border_style="cyan", title="Bot Discord"))
-
-	# Tree bot_spright
-	tree = Tree("[bold white]Command to exit the application")
-	tree.add("command : Press [cyan]'Ctrl + C'[/cyan]")
-	print(tree)
 
 # ================================================================
 # CONFIGURE [MUSIC]
@@ -241,6 +218,29 @@ async def offChannel(ctx):
 
 	else:
 		await ctx.reply(f"❌ **I'm not on any voice channels,** {user_set}.")
+
+# ================================================================
+# APPLICATION [Main Function ACTIVE]
+@bot_spright.event
+async def on_ready():
+	'''
+		Bot activation check.
+		|
+		|
+		`--> Panel.fit : Operation message successfully activated.
+			`--> bot_spright.user : Return user's bot Spright Blue.
+			`--> tree : Main command tree.
+	'''
+	# Connection Test
+	print(connection_test())
+
+	# Panel Greeting
+	print(Panel.fit(f"[bold blue]Hi, human!!!\nI am {bot_spright.user}", border_style="cyan", title="Bot Discord"))
+
+	# Tree bot_spright
+	tree = Tree("[bold white]Command to exit the application")
+	tree.add("command : Press [cyan]'Ctrl + C'[/cyan]")
+	print(tree)
 
 # ================================================================
 # CONFIGURE [GREET]
