@@ -17,7 +17,10 @@
 
 <hr>
 
-> **Bibliotecas utilizadas**
+> **Bibliotecas Instaladas**
+
+* _Virtual Environment_
+    * `python -m venv env main.py`
 
 * _import os_
 
@@ -66,6 +69,12 @@
 * _pip install requests_
     * `import requests`
     * `from requests.exceptions import ConnectionError`
+
+
+<br>
+
+* _pip3 install speedtest-cli_
+    * `import speedtest`
 
 <br>
 

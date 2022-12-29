@@ -3,8 +3,7 @@
 import os
 
 # IMPORT [wavelink n' youtube]
-import asyncio
-import youtube_dl
+from youtube_dl import YoutubeDL
 
 # IMPORT [requests - images]
 import requests
@@ -25,11 +24,6 @@ with open('arq/config.json', 'r') as json_file:
 	data = json.loads(json_file.read())
 	JSON_FILE = data
 
-# IMPORT [pip install discord.py]
-import discord
-from discord import Embed
-from discord.ext import commands
-
 # IMPORT [datetime - calendar]
 from datetime import datetime
 update_times = datetime.strftime(datetime.now(),'20%y/%m/%d [%I:%M]')
@@ -46,26 +40,29 @@ from function.meme import memeSelect
 from function.hist import historyWrite
 
 # ================================================================
+# IMPORT [pip install discord.py]
+import discord
+from discord import Embed
+from discord.ext import commands
 # CONFIGURE [Discord]
 intents = discord.Intents.all()
 discord.Intents.members = True
 discord.Intents.messages = True
 discord.Intents.message_content = True
-bot_spright = discord.Client(command_prefix="/", intents=intents)
-# variavél [from discord.ext import commands]
+# variavél [from discord.ext import bot_spright]
 bot_spright = commands.Bot(command_prefix="/", intents=intents)
-
 CHANNEL_ID = JSON_FILE['CHANNEL_ID']
 channel = bot_spright.get_channel(CHANNEL_ID)
 TOKEN = JSON_FILE['TOKEN']
 
-# CONFIG [YOUTUBE_DL]
-client = discord.Client(intents=discord.Intents.all())
-key = JSON_FILE['TOKEN']
 
-voice_clients = {}
-
-yt_dl_opts = {
+# ================================================================
+# function music [`func` = True | `silence` = False]
+MUSIC_PAUSED  = False
+MUSIC_PLAYING = False
+# 2d array containing [song, channel]
+MUSIC_QUEUE = []
+YDL_OPTIONS = {
     'format': 'bestaudio',
     'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
     'restrictfilenames': True,
@@ -78,10 +75,32 @@ yt_dl_opts = {
     'default_search': 'auto',
     'source_address': '0.0.0.0' # bind to ipv4 since ipv6 addresses cause issues sometimes
 }
+YTDL_CONFIG = YoutubeDL(YDL_OPTIONS)
+FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
 
-ytdl = youtube_dl.YoutubeDL(yt_dl_opts)
+#searching the item on youtube
+def on_searchYT(item):
+    with YoutubeDL(YDL_OPTIONS) as ydl:
+        try: 
+            info = ydl.extract_info("ytsearch:%s" % item, download=False)['entries'][0]
 
-FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': "-vn"}
+        except Exception: 
+            return False
+
+    return {'source': info['formats'][0]['url'], 'title': info['title']}
+	
+def play_next(ctx):
+	if len(MUSIC_QUEUE) > 0:
+		voiceChannel = discord.utils.get(ctx.guild.voice_channels, name=f"{ctx.message.author.voice.channel}")
+		MUSIC_PLAYING = True
+        #get the first url
+		m_url = MUSIC_QUEUE[0][0]['source']
+        #remove the first element as you are currently playing it
+		MUSIC_QUEUE.pop(0)
+		voiceChannel.play(discord.FFmpegPCMAudio(m_url, **FFMPEG_OPTIONS), after=lambda e: play_next(ctx))
+
+	else:
+		MUSIC_PLAYING = False
 
 # ================================================================
 # APPLICATION [Main Function ACTIVE]
@@ -101,57 +120,127 @@ async def on_ready():
 	# Panel Greeting
 	print(Panel.fit(f"[bold blue]Hi, human!!!\nI am {bot_spright.user}", border_style="cyan", title="Bot Discord"))
 
-	# Tree Commands
+	# Tree bot_spright
 	tree = Tree("[bold white]Command to exit the application")
 	tree.add("command : Press [cyan]'Ctrl + C'[/cyan]")
 	print(tree)
 
 # ================================================================
 # CONFIGURE [MUSIC]
-@bot_spright.command(name='play')
-async def joinChannel(ctx, urlYT: str):
-	'''
-		DJ Spright Blue.
-		|
-		|
-		`--> user_set : Channel where the bot will be directed.
-		`--> voiceChannel : Voice channel
-		|
-		`--> data_music['channel'] : Selected channel name.
-		`--> data_music['url'] : Link to player targeting generated <!important>.
-	'''
+# infinite loop checking 
+async def play_music(ctx, urlYT):
+	server = ctx.message.guild
+	voiceChannel = server.voice_client
 
-	user_set = f"<@{ctx.author.id}>"
+	if voiceChannel != None:
+		MUSIC_PLAYING = True
 
-	try:
-		if not ctx.message.author.voice:
-			await ctx.reply(f"Entre em alguma sala, {user_set}")
-			return
+		data_music = YTDL_CONFIG.extract_info(url=urlYT, download=False)
+		m_url = data_music['url']
 
-		else:
-			# mostra o canal de voz onde o user está
-			voiceChannel = discord.utils.get(ctx.guild.voice_channels, name=f"{ctx.message.author.voice.channel}")
-			await voiceChannel.connect()
+		voiceChannel.play(discord.FFmpegPCMAudio(m_url, **FFMPEG_OPTIONS, executable='ffmpeg/bin/ffmpeg.exe'), after=lambda e: play_next(ctx))
 
-			# url escolhido
-			loop = asyncio.get_event_loop()
-			data_music = await loop.run_in_executor(None, lambda: ytdl.extract_info(url=urlYT, download=False))
-			song = data_music['url']
-			player = discord.FFmpegPCMAudio(song, **FFMPEG_OPTIONS)
-			voiceChannel.play(player)
-
-	except discord.ext.commands.errors.MissingRequiredArgument:
-		await ctx.reply("❌ You need to enter a song link.")
-
-@bot_spright.command(name='leave')
-async def leaveChannel(ctx):
-	user_set = f"<@{ctx.author.id}>"
-
-	if(ctx.voice_client):
-		await ctx.guild.voice_client.disconnect()
-		await ctx.reply(f"✔️ I was disconnected from the voice channel successfully, {user_set}.")
 	else:
-		await ctx.reply(f"❌ I'm not on any voice channels, {user_set}.")
+		MUSIC_PLAYING = False
+
+@bot_spright.command(name="play")
+async def on_Music(ctx, urlYT:str):
+	query = " ".join(urlYT)
+	user_set = f"<@{ctx.author.id}>"
+	data_music = YTDL_CONFIG.extract_info(url=urlYT, download=False)
+
+	if not ctx.message.author.voice:
+		await ctx.reply(f"❌ **Enter some voice channel,** {user_set}**...**")
+		return
+
+	else:
+		voiceChannel = discord.utils.get(ctx.guild.voice_channels, name=f"{ctx.message.author.voice.channel}")
+		await voiceChannel.connect()
+
+		await ctx.reply(f"🎧 **{data_music['title']}\n\n🖥️ {data_music['channel']}**")
+
+		song = on_searchYT(query)
+
+		if type(song) == type(True):
+			await ctx.reply("❌ **Could not download the song. Incorrect format try another keyword. This could be due to playlist or a livestream format.**")
+
+		elif MUSIC_PAUSED:
+			voiceChannel.resume(ctx)
+			
+		else:
+			await ctx.send("✔️ **Song added to the queue**")
+			MUSIC_QUEUE.append([song, voiceChannel])
+                
+			if MUSIC_PLAYING == False:
+				await play_music(ctx, urlYT)
+
+@bot_spright.command(name="pause")
+async def pause(ctx, *args):
+	voiceChannel = discord.utils.get(ctx.guild.voice_channels, name=f"{ctx.message.author.voice.channel}")
+	if MUSIC_PLAYING:
+		MUSIC_PLAYING = False
+		MUSIC_PAUSED = True
+		voiceChannel.pause()
+
+	elif MUSIC_PAUSED:
+		MUSIC_PAUSED = False
+		MUSIC_PLAYING = True
+		voiceChannel.resume()
+
+@bot_spright.command(name = "resume")
+async def resume(ctx, *args):
+	voiceChannel = discord.utils.get(ctx.guild.voice_channels, name=f"{ctx.message.author.voice.channel}")
+
+	if MUSIC_PAUSED:
+		MUSIC_PAUSED = False
+		MUSIC_PLAYING = True
+		voiceChannel.resume()
+
+@bot_spright.command(name="skip")
+async def skip(ctx):
+	voiceChannel = discord.utils.get(ctx.guild.voice_channels, name=f"{ctx.message.author.voice.channel}")
+
+	if voiceChannel != None:
+		voiceChannel.stop()
+        #try to play next in the queue if it exists
+		await play_music(ctx)
+
+@bot_spright.command(name="queue")
+async def queue(ctx):
+    retval = ""
+    for i in range(0, len(MUSIC_QUEUE)):
+        # display a max of 5 songs in the current queue
+        if (i > 4): break
+        retval += MUSIC_QUEUE[i][0]['title'] + "\n"
+
+    if retval != "":
+        await ctx.reply(retval)
+    else:
+        await ctx.reply("❌ **No music in queue**")
+
+@bot_spright.command(name="clear")
+async def clear(ctx):
+	server = ctx.message.guild
+	voiceChannel = server.voice_client
+
+	if voiceChannel != None and MUSIC_PLAYING:
+		voiceChannel.stop()
+		MUSIC_QUEUE = []
+		await ctx.reply("✔️ **Music queue cleared**")
+
+	else:
+		await ctx.reply("❌ **There is no queue to clear.**")
+
+@bot_spright.command(name="leave")
+async def offChannel(ctx):
+	user_set = f"<@{ctx.author.id}>"
+	
+	if (ctx.voice_client):
+		await ctx.guild.voice_client.disconnect()
+		await ctx.reply(f"✔️ **I was disconnected from the voice channel successfully,** {user_set}.")
+
+	else:
+		await ctx.reply(f"❌ **I'm not on any voice channels,** {user_set}.")
 
 # ================================================================
 # CONFIGURE [GREET]
@@ -164,8 +253,7 @@ async def on_message(ctx):
 		`--> ctx.author : Message author name (example#1234).
 			`--> ctx.author.id : Message author ID to mention.
 			`--> ctx.guild.icon.url : Icon's server.
-			`--> ctx.guild.owner : Server owner.
-			
+			`--> ctx.guild.owner : Server owner.		
 	'''
 
 	user_set = f"<@{ctx.author.id}>"
@@ -284,7 +372,7 @@ async def on_EmbedInfo(ctx):
 @bot_spright.command(name="helper")
 async def on_EmbedHelp(ctx):
 	URL_WEBHOOK = JSON_FILE['URL_WEBHOOK']
-	DESCRIPTION_EMBED = f"_Hello human! I'm here to help you!_{os.linesep}\n**The commands that are on my system are as follows:**\n"
+	DESCRIPTION_EMBED = f"_Hello human! I'm here to help you!_{os.linesep}\n**The bot_spright that are on my system are as follows:**\n"
 
 	embed = Embed(
 		url=URL_WEBHOOK,
@@ -303,7 +391,7 @@ async def on_EmbedHelp(ctx):
 	# title[🕹️ Control]
 	embed.add_field(name="▬▬▬▬▬▬", value="🕹️ **Control**", inline=False)
 	# content
-	embed.add_field(name="`/helper`", value="```I'll reply a list of commands... like this one.```", inline=True)
+	embed.add_field(name="`/helper`", value="```I'll reply a list of bot_spright... like this one.```", inline=True)
 	embed.add_field(name="`/info`", value="```Information of my existence and my creator.```", inline=True)
 
 	# title[🎧 Music]
