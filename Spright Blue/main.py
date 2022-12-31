@@ -5,6 +5,9 @@ import os
 # IMPORT [wavelink n' youtube]
 from youtube_dl import YoutubeDL
 
+# IMPORT [PIL > Image]
+from PIL import Image
+
 # IMPORT [requests - images]
 import requests
 
@@ -241,6 +244,77 @@ async def on_ready():
 	tree = Tree("[bold white]Command to exit the application")
 	tree.add("command : Press [cyan]'Ctrl + C'[/cyan]")
 	print(tree)
+
+# ================================================================
+# CONFIGURE [TESTE]
+@bot_spright.command(name='pisei')
+async def function(ctx, user_set:discord.User):
+	userID = user_set.id
+	userAvatar = user_set.avatar
+
+	if userID == 303321235679477760:
+		await ctx.reply("😡 You cannot tag my creator in this meme.")
+		userID = ctx.author.id
+		userAvatar = ctx.author.avatar
+		# save icon[user_set]
+		image_url = str(userAvatar)
+		myfile = requests.get(image_url)
+		open(f"img_memes/users/{str(userID)}.png", 'wb').write(myfile.content)
+
+		# pisei_na_merda.jpg [275x400]
+		base_image = Image.open('img_memes/templates/pisei_na_merda.jpg')
+		icon_user = Image.open(f'img_memes/users/{userID}.png').convert('RGBA')
+
+		position = base_image.size
+		# icone do usuario para novo tamanho [100x110]
+		newSize = (97, 110)
+		icon_user = icon_user.resize(newSize)
+		# posição do ícone
+		new_pos = 75, 250
+		transparent = Image.new(mode='RGBA', size=position, color=(0, 0, 0, 0))
+		transparent.paste(base_image, (0, 0))
+		transparent.paste(icon_user, new_pos, icon_user)
+		image_mode = base_image.mode
+		if image_mode == 'RGB':
+				transparent = transparent.convert(image_mode)
+
+		else:
+			transparent = transparent.convert('P')
+		transparent.save('img_memes/img_create/teste.jpg', optimize=True, quality=100)
+
+		with open(f'img_memes/img_create/meme_{userID}.jpg', 'rb') as img:
+			img_set = discord.File(img)
+			await ctx.reply(file=img_set)
+
+	else:
+		image_url = str(userAvatar)
+		myfile = requests.get(image_url)
+		open(f"img_memes/users/{str(userID)}.png", 'wb').write(myfile.content)
+
+		# pisei_na_merda.jpg [275x400]
+		base_image = Image.open('img_memes/templates/pisei_na_merda.jpg')
+		icon_user = Image.open(f'img_memes/users/{userID}.png').convert('RGBA')
+
+		position = base_image.size
+		# icone do usuario para novo tamanho [100x110]
+		newSize = (97, 110)
+		icon_user = icon_user.resize(newSize)
+		# posição do ícone
+		new_pos = 75, 250
+		transparent = Image.new(mode='RGBA', size=position, color=(0, 0, 0, 0))
+		transparent.paste(base_image, (0, 0))
+		transparent.paste(icon_user, new_pos, icon_user)
+		image_mode = base_image.mode
+		if image_mode == 'RGB':
+				transparent = transparent.convert(image_mode)
+
+		else:
+			transparent = transparent.convert('P')
+		transparent.save(f'img_memes/img_create/meme_{userID}.jpg', optimize=True, quality=100)
+
+		with open(f'img_memes/img_create/meme_{userID}.jpg', 'rb') as img:
+			img_set = discord.File(img)
+			await ctx.reply(file=img_set)
 
 # ================================================================
 # CONFIGURE [GREET]

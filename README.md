@@ -24,6 +24,8 @@
 
 * _import os_
 
+* _from PIL import Image_
+
 <br>
 
 * _pip install discord.py_
@@ -79,3 +81,35 @@
 <br>
 
 * _pip install PyNaCl_
+
+<hr>
+
+<div align="center">
+
+# Pip list - Virtual Environment🤖
+
+Package | Version
+--- | ---
+aiohttp            | 3.8.3
+aiosignal          | 1.3.1
+async-timeout      | 4.0.2
+attrs              | 22.2.0
+certifi            | 2022.12.7
+charset-normalizer | 2.1.1
+commonmark         | 0.9.1
+discord.py         | 2.1.0
+ffmpeg-python      | 0.2.0
+frozenlist         | 1.3.3
+future             | 0.18.2
+idna               | 3.4
+multidict          | 6.0.4
+pip                | 22.3.1
+Pygments           | 2.13.0
+requests           | 2.28.1
+rich               | 12.6.0
+setuptools         | 65.5.0
+speedtest-cli      | 2.1.3
+urllib3            | 1.26.13
+yarl               | 1.8.2
+youtube-dl         | 2021.12.17
+</div>
