@@ -249,6 +249,15 @@ async def on_ready():
 # CONFIGURE [TESTE]
 @bot_spright.command(name='pisei')
 async def function(ctx, user_set:discord.User):
+	'''
+		`Pisei Na Merda` meme generator.
+		|
+		|
+		`--> ctx : Context
+		`--> user_set : Mentioned user.
+			`--> userID : Mentioned user ID.
+			`--> userAvatar : Mentioned user AVATAR.
+	'''
 	userID = user_set.id
 	userAvatar = user_set.avatar
 
