@@ -12,7 +12,7 @@
 </p>
 
 <div align="center">
-    <img src="img/SprightBlue.png"/>
+    <img src="Spright Blue/img/SprightBlue.png"/>
 </div>
 
 <hr>
