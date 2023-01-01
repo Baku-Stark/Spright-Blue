@@ -36,6 +36,9 @@ from rich import print
 from rich.tree import Tree
 from rich.panel import Panel
 
+# IMPORT [cogs[folder] > files]
+from cogs.embed import *
+
 # IMPORT [function[folder] > files]
 from function.mandaTrue import on_TrulyFunction
 from function.connection import connection_test
@@ -60,7 +63,7 @@ TOKEN = JSON_FILE['TOKEN']
 
 
 # ================================================================
-# function music [`func` = True | `silence` = False]
+# function music
 MUSIC_PAUSED  = False
 MUSIC_PLAYING = False
 # 2d array containing [song, channel]
@@ -239,6 +242,10 @@ async def on_ready():
 
 	# Panel Greeting
 	print(Panel.fit(f"[bold blue]Hi, human!!!\nI am {bot_spright.user}", border_style="cyan", title="Bot Discord"))
+
+	# [COGS]
+	print(Panel.fit(cogEmbedStatus()))
+	await bot_spright.add_cog(EmbedClass(bot_spright))
 
 	# Tree bot_spright
 	tree = Tree("[bold white]Command to exit the application")
@@ -427,63 +434,6 @@ async def on_MemeSave(ctx, folder: str):
     	).set_footer(text=f"Level 2 ★ | {update_times}")
 		
 		await ctx.reply(embed=embed)
-	
-# ================================================================
-# CONFIGURE [WEBHOOK - EMBED(INFO)]
-@bot_spright.command(name='info')
-async def on_EmbedInfo(ctx):
-    URL_WEBHOOK = JSON_FILE['URL_WEBHOOK']
-    DESCRIPTION_EMBED = """
-		_Bot Spright activated successfully!_
-		💻 **My Creator**\n
-		GitHub:  https://github.com/Baku-Stark\n\n
-		💻 **About Me**\n
-		```Players and lovers of the Yu-Gi-Oh! know me a lot (I'm a pretty annoying monster considering my level). To those who don't know... BIBIRUUU!!! I AM SPRIGHT BLUE 💙 !!!```
-	"""
-
-    embed = Embed(
-        url=URL_WEBHOOK,
-        title="★ Spright Blue - Info",
-        description=DESCRIPTION_EMBED,
-        color= discord.Colour.dark_blue()
-    ).set_footer(text=f"Level 2 ★ | {update_times}").set_thumbnail(url="https://media.discordapp.net/attachments/1055607254465908877/1055607254700793896/SprightBlue-Icon.png")
-
-    await ctx.reply(embed=embed)
-
-# ================================================================
-# CONFIGURE [WEBHOOK - EMBED(HELP)]
-@bot_spright.command(name="helper")
-async def on_EmbedHelp(ctx):
-	URL_WEBHOOK = JSON_FILE['URL_WEBHOOK']
-	DESCRIPTION_EMBED = f"_Hello human! I'm here to help you!_{os.linesep}\n**The bot_spright that are on my system are as follows:**\n"
-
-	embed = Embed(
-		url=URL_WEBHOOK,
-		title="★ Spright Blue - Info",
-		description=DESCRIPTION_EMBED,
-		color=discord.Color.dark_blue()
-	).set_footer(text=f"Level 2 ★ | {update_times}").set_thumbnail(url="https://media.discordapp.net/attachments/1055607254465908877/1055607254700793896/SprightBlue-Icon.png")
-
-	# title[😂 Funny]
-	embed.add_field(name="▬▬▬▬▬▬", value="😂 **Funny**", inline=False)
-	# content
-	embed.add_field(name="`/mandaTrue`", value="```A prank of my creator with his friends. Nothing written here should be taken seriously.```", inline=True)
-	embed.add_field(name="`/meme`", value="```For your fun, my creator created a folder with memes to reply.```", inline=True)
-	embed.add_field(name="`/greet`", value="```A friendly greeting.```", inline=True)
-
-	# title[🕹️ Control]
-	embed.add_field(name="▬▬▬▬▬▬", value="🕹️ **Control**", inline=False)
-	# content
-	embed.add_field(name="`/helper`", value="```I'll reply a list of bot_spright... like this one.```", inline=True)
-	embed.add_field(name="`/info`", value="```Information of my existence and my creator.```", inline=True)
-
-	# title[🎧 Music]
-	embed.add_field(name="▬▬▬▬▬▬", value="🎧 **Music**", inline=False)
-	# title[🎧 Music]
-	embed.add_field(name="`/play <url_YouTube>`", value="```I'm going to join the voice channel to play a song.```", inline=True)
-	embed.add_field(name="`/leave`", value="```You will take me off the voice call by interrupting your music.```", inline=True)
-
-	await ctx.reply(embed=embed)
 
 # ================================================================
 # CONFIGURE [run]
