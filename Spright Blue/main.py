@@ -241,10 +241,10 @@ async def on_ready():
 	print(connection_test())
 
 	# Panel Greeting
-	print(Panel.fit(f"[bold blue]Hi, human!!!\nI am {bot_spright.user}", border_style="cyan", title="Bot Discord"))
+	print(Panel(f"[bold blue]Hi, human!!!\nI am {bot_spright.user}", border_style="cyan", title="Bot Discord"))
 
 	# [COGS]
-	print(Panel.fit(cogEmbedStatus()))
+	print(Panel(cogEmbedStatus()))
 	await bot_spright.add_cog(EmbedClass(bot_spright))
 
 	# Tree bot_spright
