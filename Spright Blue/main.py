@@ -1,9 +1,14 @@
 # ================================================================
+# IMPORT [console]
+import console
+from console.utils import set_title
+
+# IMPORT [rich - dashboard(console)]
+from rich.console import group
+from rich.panel import Panel
+
 # IMPORT [os - Miscellaneous operating system interfaces]
 import os
-
-# IMPORT [wavelink n' youtube]
-from youtube_dl import YoutubeDL
 
 # IMPORT [PIL > Image]
 from PIL import Image
@@ -38,6 +43,7 @@ from rich.panel import Panel
 
 # IMPORT [cogs[folder] > files]
 from cogs.embed import *
+from cogs.music import *
 
 # IMPORT [function[folder] > files]
 from function.mandaTrue import on_TrulyFunction
@@ -61,170 +67,6 @@ CHANNEL_ID = JSON_FILE['CHANNEL_ID']
 channel = bot_spright.get_channel(CHANNEL_ID)
 TOKEN = JSON_FILE['TOKEN']
 
-
-# ================================================================
-# function music
-MUSIC_PAUSED  = False
-MUSIC_PLAYING = False
-# 2d array containing [song, channel]
-MUSIC_QUEUE = []
-YDL_OPTIONS = {
-    'format': 'bestaudio/best',
-    'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
-    'restrictfilenames': True,
-    'noplaylist': True,
-    'nocheckcertificate': True,
-    'ignoreerrors': False,
-    'logtostderr': False,
-    'quiet': True,
-    'no_warnings': True,
-    'default_search': 'auto',
-    'source_address': '0.0.0.0' # bind to ipv4 since ipv6 addresses cause issues sometimes
-}
-YTDL_CONFIG = YoutubeDL(YDL_OPTIONS)
-FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
-
-#searching the item on youtube
-def on_searchYT(item):
-    with YoutubeDL(YDL_OPTIONS) as ydl:
-        try: 
-            info = ydl.extract_info("ytsearch:%s" % item, download=False)['entries'][0]
-
-        except Exception: 
-            return False
-
-    return {'source': info['formats'][0]['url'], 'title': info['title']}
-	
-def play_next(ctx):
-	if len(MUSIC_QUEUE) > 0:
-		voiceChannel = discord.utils.get(ctx.guild.voice_channels, name=f"{ctx.message.author.voice.channel}")
-		MUSIC_PLAYING = True
-        #get the first url
-		m_url = MUSIC_QUEUE[0][0]['source']
-        #remove the first element as you are currently playing it
-		MUSIC_QUEUE.pop(0)
-		voiceChannel.play(discord.FFmpegPCMAudio(m_url, **FFMPEG_OPTIONS), after=lambda e: play_next(ctx))
-
-	else:
-		MUSIC_PLAYING = False
-
-# ================================================================
-# CONFIGURE [MUSIC]
-# infinite loop checking 
-async def play_music(ctx, urlYT):
-	server = ctx.message.guild
-	voiceChannel = server.voice_client
-
-	if voiceChannel != None:
-		MUSIC_PLAYING = True
-
-		data_music = YTDL_CONFIG.extract_info(url=urlYT, download=False)
-		m_url = data_music['url']
-
-		voiceChannel.play(discord.FFmpegPCMAudio(m_url, **FFMPEG_OPTIONS, executable='ffmpeg/bin/ffmpeg.exe'), after=lambda e: play_next(ctx))
-
-	else:
-		MUSIC_PLAYING = False
-
-@bot_spright.command(name="play")
-async def on_Music(ctx, urlYT:str):
-	query = " ".join(urlYT)
-	user_set = f"<@{ctx.author.id}>"
-	data_music = YTDL_CONFIG.extract_info(url=urlYT, download=False)
-
-	if not ctx.message.author.voice:
-		await ctx.reply(f"❌ **Enter some voice channel,** {user_set}**...**")
-		return
-
-	else:
-		voiceChannel = discord.utils.get(ctx.guild.voice_channels, name=f"{ctx.message.author.voice.channel}")
-		await voiceChannel.connect()
-
-		await ctx.reply(f"🎧 **{data_music['title']}\n\n🖥️ {data_music['channel']}**")
-
-		song = on_searchYT(query)
-
-		if type(song) == type(True):
-			await ctx.reply("❌ **Could not download the song. Incorrect format try another keyword. This could be due to playlist or a livestream format.**")
-
-		elif MUSIC_PAUSED:
-			voiceChannel.resume(ctx)
-			
-		else:
-			await ctx.send("✔️ **Song added to the queue**")
-			MUSIC_QUEUE.append([song, voiceChannel])
-                
-			if MUSIC_PLAYING == False:
-				await play_music(ctx, urlYT)
-
-@bot_spright.command(name="pause")
-async def pause(ctx, *args):
-	voiceChannel = discord.utils.get(ctx.guild.voice_channels, name=f"{ctx.message.author.voice.channel}")
-	if MUSIC_PLAYING:
-		MUSIC_PLAYING = False
-		MUSIC_PAUSED = True
-		voiceChannel.pause()
-
-	elif MUSIC_PAUSED:
-		MUSIC_PAUSED = False
-		MUSIC_PLAYING = True
-		voiceChannel.resume()
-
-@bot_spright.command(name = "resume")
-async def resume(ctx, *args):
-	voiceChannel = discord.utils.get(ctx.guild.voice_channels, name=f"{ctx.message.author.voice.channel}")
-
-	if MUSIC_PAUSED:
-		MUSIC_PAUSED = False
-		MUSIC_PLAYING = True
-		voiceChannel.resume()
-
-@bot_spright.command(name="skip")
-async def skip(ctx):
-	voiceChannel = discord.utils.get(ctx.guild.voice_channels, name=f"{ctx.message.author.voice.channel}")
-
-	if voiceChannel != None:
-		voiceChannel.stop()
-        #try to play next in the queue if it exists
-		await play_music(ctx)
-
-@bot_spright.command(name="queue")
-async def queue(ctx):
-    retval = ""
-    for i in range(0, len(MUSIC_QUEUE)):
-        # display a max of 5 songs in the current queue
-        if (i > 4): break
-        retval += MUSIC_QUEUE[i][0]['title'] + "\n"
-
-    if retval != "":
-        await ctx.reply(retval)
-    else:
-        await ctx.reply("❌ **No music in queue**")
-
-@bot_spright.command(name="clear")
-async def clear(ctx):
-	server = ctx.message.guild
-	voiceChannel = server.voice_client
-
-	if voiceChannel != None and MUSIC_PLAYING:
-		voiceChannel.stop()
-		MUSIC_QUEUE = []
-		await ctx.reply("✔️ **Music queue cleared**")
-
-	else:
-		await ctx.reply("❌ **There is no queue to clear.**")
-
-@bot_spright.command(name="leave")
-async def offChannel(ctx):
-	user_set = f"<@{ctx.author.id}>"
-	
-	if (ctx.voice_client):
-		await ctx.guild.voice_client.disconnect()
-		await ctx.reply(f"✔️ **I was disconnected from the voice channel successfully,** {user_set}.")
-
-	else:
-		await ctx.reply(f"❌ **I'm not on any voice channels,** {user_set}.")
-
 # ================================================================
 # APPLICATION [Main Function ACTIVE]
 @bot_spright.event
@@ -238,14 +80,30 @@ async def on_ready():
 			`--> tree : Main command tree.
 	'''
 	# Connection Test
+	os.system('cls')
+	set_title('Discord Bot - Spright Blue')
 	print(connection_test())
 
 	# Panel Greeting
 	print(Panel(f"[bold blue]Hi, human!!!\nI am {bot_spright.user}", border_style="cyan", title="Bot Discord"))
 
 	# [COGS]
-	print(Panel(cogEmbedStatus()))
-	await bot_spright.add_cog(EmbedClass(bot_spright))
+	try:
+		# [EMBED]
+		print(Panel(cog_EmbedStatus()))
+		await bot_spright.add_cog(EmbedClass(bot_spright))
+
+		# [MUSIC]
+		print(Panel(cog_MusicStatus()))
+		await bot_spright.add_cog(MusicClass(bot_spright))
+
+	except ModuleNotFoundError:
+		@group()
+		def error_Module():
+			status = yield Panel("[bold]COGS > embed.py ACTIVED![/bold]", style="red")
+			return status
+		
+		print(Panel(error_Module()))
 
 	# Tree bot_spright
 	tree = Tree("[bold white]Command to exit the application")

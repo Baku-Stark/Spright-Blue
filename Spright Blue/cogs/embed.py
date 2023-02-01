@@ -89,10 +89,11 @@ class EmbedClass(commands.Cog):
 
         await ctx.reply(embed=embed)
 
+#  -----------
 async def setup(client):
     await client.add_cog(EmbedClass(client))
 
 @group()
-def cogEmbedStatus():
+def cog_EmbedStatus():
     status = yield Panel("[bold]COGS > embed.py ACTIVED![/bold]", style="blue")
     return status
