@@ -3,10 +3,6 @@
 import console
 from console.utils import set_title
 
-# IMPORT [rich - dashboard(console)]
-from rich.console import group
-from rich.panel import Panel
-
 # IMPORT [os - Miscellaneous operating system interfaces]
 import os
 
@@ -39,6 +35,9 @@ update_times = datetime.strftime(datetime.now(),'20%y/%m/%d [%I:%M]')
 # IMPORT [rich - dashboard(console)]
 from rich import print
 from rich.tree import Tree
+from rich.panel import Panel
+# IMPORT [rich - dashboard(console)]
+from rich.console import group
 from rich.panel import Panel
 
 # IMPORT [cogs[folder] > files]
